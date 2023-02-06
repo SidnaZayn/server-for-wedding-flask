@@ -10,7 +10,7 @@ def load_configuration_from_json(_json_filepath = SETTINGS_FILE_NAME):
     """Load the configuration from the settings.json file"""
     global CONF_DICT
     try:
-        with open(_json_filepath,'rb', encoding='utf-8') as conf_file:
+        with open(_json_filepath,'rb', encoding='utf8') as conf_file:
             CONF_DICT = json.load(conf_file)['config']
 
     except Exception as e:
