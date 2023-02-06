@@ -11,7 +11,7 @@ def load_configuration_from_json(_json_filepath = SETTINGS_FILE_NAME):
     global CONF_DICT
     try:
         with open(_json_filepath) as conf_file:
-            CONF_DICT = json.load(conf_file)['config']
+            CONF_DICT = json.load(conf_file)["config"]
 
     except Exception as e:
         raise Exception(f'Failed to load {_json_filepath} due to: {e}')
