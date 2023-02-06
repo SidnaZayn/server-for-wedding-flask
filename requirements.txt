@@ -1,5 +1,5 @@
 PyMySQL~=1.0.2
-opencv-python
+cv2
 Flask~=2.2.2
 db
 alembic
