@@ -2,7 +2,7 @@ import os
 import json
 
 
-SETTINGS_FILE_NAME = 'settings.json'
+SETTINGS_FILE_NAME = r'settings.json'
 CONF_DICT = {}
 
 
