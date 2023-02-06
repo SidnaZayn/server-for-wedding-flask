@@ -208,7 +208,6 @@ def qr_reader():
             db.run_query(query=query)
             records = db.run_query(query=query2)
             response = get_response_msg(records, HTTPStatus.OK)
-            print(records)
             return response
         else:
             response = get_response_msg("QR Code not detected", HTTPStatus.NOT_FOUND)
