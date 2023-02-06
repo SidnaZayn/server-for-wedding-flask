@@ -2,7 +2,7 @@ import os
 import json
 
 
-SETTINGS_FILE_NAME = 'settings.json'
+SETTINGS_FILE_NAME = '/home/undanga4/server-for-wedding-flask/settings.json'
 CONF_DICT = {}
 
 
