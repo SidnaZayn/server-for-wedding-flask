@@ -127,6 +127,7 @@ def ubah_kehadiran():
     kehadiran = request.args.get('kehadiran')
     query = f"UPDATE tb_guests SET kehadiran='{kehadiran}' WHERE id={id}"
     records = db.run_query(query=query)
+    db.close_connection()
     response = get_response_msg(records, HTTPStatus.OK)
     return response
 
@@ -143,6 +144,7 @@ def getsummary():
         records1 = db.run_query(query=query1)
         records2 = db.run_query(query=query2)
         records3 = db.run_query(query=query3)
+        db.close_connection()
         response = [len(records), len(records1), len(records2), len(records3)]
         response = get_response_msg(response, HTTPStatus.OK)
         return response
@@ -160,6 +162,7 @@ def search():
         query = f"SELECT * FROM tb_guests WHERE name LIKE '%{params}%'"
         records = db.run_query(query=query)
         response = get_response_msg(records, HTTPStatus.OK)
+        db.close_connection()
         return response
     except pymysql.MySQLError as sqle:
         abort(HTTPStatus.INTERNAL_SERVER_ERROR, description=str(sqle))
@@ -208,6 +211,7 @@ def qr_reader():
             db.run_query(query=query)
             records = db.run_query(query=query2)
             response = get_response_msg(records, HTTPStatus.OK)
+            db.close_connection()
             return response
         else:
             response = get_response_msg("QR Code not detected", HTTPStatus.NOT_FOUND)
