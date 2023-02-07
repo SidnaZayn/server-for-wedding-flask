@@ -1,3 +1,5 @@
+import base64
+import json
 from http import HTTPStatus
 
 import cv2
@@ -191,11 +193,12 @@ def ubah_kehadiran():
             connection_object.close()
             return "data berhasil diubah"
 
+
 ## /api/1.0/search
 @app.route(f"{route_prefix}/search", methods=['GET'])
 def search():
     params = request.args.get('params')
-# Get connection object from a pool
+    # Get connection object from a pool
     connection_object = connection_pool.get_connection()
     try:
         if connection_object.is_connected():
@@ -210,6 +213,7 @@ def search():
             cursor.close()
             connection_object.close()
             return record
+
 
 ## /api/1.0/getsummary
 @app.route(f"{route_prefix}/getsummary", methods=['GET'])
@@ -230,6 +234,51 @@ def getsummary():
             response = [len(record1), len(record2), len(record3), len(record4)]
             response = get_response_msg(response, HTTPStatus.OK)
 
+    except Error as e:
+        print("Error while connecting to MySQL using Connection pool ", e)
+    finally:
+        # closing database connection.
+        if connection_object.is_connected():
+            cursor.close()
+            connection_object.close()
+            return response
+
+
+## /api/1.0/readqr
+@app.route(f"{route_prefix}/scanqr", methods=['POST'])
+def readqr():
+    data = json.loads(request.data)
+    imgg = data['base64']
+    name = str(data['time'])
+
+    B64_decode = base64.b64decode(imgg)
+    path = f'image'
+    # write the decoded data back to original format in  file
+    img_file = open(path + 'image_' + name + '.jpg', 'wb')
+    img_file.write(B64_decode)
+    img_file.close()
+
+    img_arr = cv2.imread(path + '\image_' + name + '.jpg')
+
+    # Get connection object from a pool
+    connection_object = connection_pool.get_connection()
+
+    # Detect and decode the qrcode
+    data, bbox, rectifiedImage = qrDecoder.detectAndDecode(img_arr)
+    print(len(data))
+    try:
+        if len(data) > 0:
+            output = format(data)
+            cursor = connection_object.cursor()
+            cursor.execute(f"UPDATE tb_guests SET kehadiran='SUDAH HADIR' WHERE id={output}")
+            connection_object.commit()
+            print(output)
+            cursor.execute(f"select * from tb_guests WHERE id={output}")
+            record = cursor.fetchall()
+            response = get_response_msg(record, HTTPStatus.OK)
+        else:
+            response = get_response_msg("QR Code not detected", HTTPStatus.NOT_FOUND)
+            return response
     except Error as e:
         print("Error while connecting to MySQL using Connection pool ", e)
     finally:
