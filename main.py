@@ -250,23 +250,23 @@ def readqr():
     data = json.loads(request.data)
     imgg = data['base64']
     name = str(data['time'])
-
-    B64_decode = base64.b64decode(imgg)
-    path = f'image'
-    # write the decoded data back to original format in  file
-    img_file = open(path + 'image_' + name + '.jpg', 'wb')
-    img_file.write(B64_decode)
-    img_file.close()
-
-    img_arr = cv2.imread(path + '\image_' + name + '.jpg')
-
-    # Get connection object from a pool
-    connection_object = connection_pool.get_connection()
-
-    # Detect and decode the qrcode
-    data, bbox, rectifiedImage = qrDecoder.detectAndDecode(img_arr)
-    print(len(data))
     try:
+        B64_decode = base64.b64decode(imgg)
+        path = r'image'
+        # write the decoded data back to original format in  file
+        img_file = open(path + '\image_' + name + '.jpg', 'wb')
+        img_file.write(B64_decode)
+        img_file.close()
+
+        img_arr = cv2.imread(path + '\image_' + name + '.jpg')
+
+        # Get connection object from a pool
+        connection_object = connection_pool.get_connection()
+
+        # Detect and decode the qrcode
+        data, bbox, rectifiedImage = qrDecoder.detectAndDecode(img_arr)
+        print(len(data))
+
         if len(data) > 0:
             output = format(data)
             cursor = connection_object.cursor()
