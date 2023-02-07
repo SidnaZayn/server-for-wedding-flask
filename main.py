@@ -211,6 +211,34 @@ def search():
             connection_object.close()
             return record
 
+## /api/1.0/getsummary
+@app.route(f"{route_prefix}/getsummary", methods=['GET'])
+def getsummary():
+    # Get connection object from a pool
+    connection_object = connection_pool.get_connection()
+    try:
+        if connection_object.is_connected():
+            cursor = connection_object.cursor()
+            cursor.execute(f"SELECT * FROM tb_guests WHERE kehadiran='BELUM KONFIRMASI'")
+            record1 = cursor.fetchall()
+            cursor.execute(f"SELECT * FROM tb_guests WHERE kehadiran='AKAN HADIR'")
+            record2 = cursor.fetchall()
+            cursor.execute(f"SELECT * FROM tb_guests WHERE kehadiran='TIDAK HADIR'")
+            record3 = cursor.fetchall()
+            cursor.execute(f"SELECT * FROM tb_guests WHERE kehadiran='SUDAH HADIR'")
+            record4 = cursor.fetchall()
+            response = [len(record1), len(record2), len(record3), len(record4)]
+            response = get_response_msg(response, HTTPStatus.OK)
+
+    except Error as e:
+        print("Error while connecting to MySQL using Connection pool ", e)
+    finally:
+        # closing database connection.
+        if connection_object.is_connected():
+            cursor.close()
+            connection_object.close()
+            return response
+
 @app.route('/', methods=['GET'])
 def home():
     return redirect(url_for('health'))
