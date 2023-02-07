@@ -62,7 +62,7 @@ def health():
             connection_object.close()
             return("MySQL connection is closed")
 
-@app.route(f"{route_prefix}/get_all_tamu", methods=['GET'])
+@app.route(f"{route_prefix}/lihat_data_tamu", methods=['GET'])
 def get_all_tamu():
     # Get connection object from a pool
     connection_object = connection_pool.get_connection()
