@@ -1,5 +1,6 @@
-pymysql~=1.0.2
-flask~=2.2.2
-flask_cors~=3.0.10
-db~=6.2.32
-alembic~=1.8.1
+PyMySQL~=1.0.2
+opencv-python-headless
+Flask~=2.2.2
+mysql~=0.0.3
+mysql-connector-python~=8.0.32
+alembic~=1.9.2
