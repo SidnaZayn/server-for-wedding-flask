@@ -57,4 +57,4 @@ class DevelopmentConfig(Config):
     DB_USER = "undanga4_zen"
     DB_PASSWD = "ft,_DY3p.Ap!"
     DB_NAME = "undanga4_wedding"
-    CONNECT_TIMEOUT = 5
+    CONNECT_TIMEOUT = 200
