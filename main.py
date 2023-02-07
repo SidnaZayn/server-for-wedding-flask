@@ -1,30 +1,29 @@
-import base64
-import json
-import os
 from http import HTTPStatus
 
 import cv2
-import pymysql
-from flask import Flask, redirect, request, jsonify, url_for, abort
+from flask import Flask, redirect, request, jsonify, url_for
 from flask_cors import CORS
+from mysql.connector import Error
+from mysql.connector import pooling
 
 from config import DevelopmentConfig as devconf
-from db import Database
 
-host = os.environ.get('FLASK_SERVER_HOST', devconf.HOST)
-port = os.environ.get('FLASK_SERVER_PORT', devconf.PORT)
 version = str(devconf.VERSION).lower()
 url_prefix = str(devconf.URL_PREFIX).lower()
 route_prefix = f"/{url_prefix}/{version}"
 qrDecoder = cv2.QRCodeDetector()
 directory = r'F:\Sidna\pythonProject-BE-Wedding\image'
 
+app = Flask(__name__)
+cors = CORS(app, resources={f"{route_prefix}/*": {"origins": "*"}})
 
-def create_app():
-    app = Flask(__name__)
-    cors = CORS(app, resources={f"{route_prefix}/*": {"origins": "*"}})
-    app.config.from_object(devconf)
-    return app
+connection_pool = pooling.MySQLConnectionPool(pool_name="pynative_pool",
+                                              pool_size=5,
+                                              pool_reset_session=True,
+                                              host='localhost',
+                                              database='wedding',
+                                              user='root',
+                                              password='11223344')
 
 
 def get_response_msg(data, status_code):
@@ -36,189 +35,114 @@ def get_response_msg(data, status_code):
     response_msg.status_code = status_code
     return response_msg
 
-
-app = create_app()
-wsgi_app = app.wsgi_app
-db = Database(devconf)
-
-
-## ==============================================[ Routes - Start ]
-## /api/v1/tambah_tamu
-@app.route(f"{route_prefix}/tambah_tamu", methods=['POST'])
-def tambah_tamu():
-    if request.method == "POST":
-        nama = request.args.get('nama')
-        alamat = request.args.get('alamat')
-        jenis_tamu = request.args.get('jenis_tamu')
-        query = f"INSERT INTO tb_guests (name, alamat, jenis_tamu) VALUES ('{nama}','{alamat}','{jenis_tamu}')"
-        db.run_query(query=query)
-        record = "data berhasil ditambahkan"
-        response = get_response_msg(record, HTTPStatus.OK)
-        db.close_connection()
-        return response
-    else:
-        response = get_response_msg("error", HTTPStatus.INTERNAL_SERVER_ERROR)
-        return response
-
-
-## /api/v1/lihat_data_tamu
-@app.route(f"{route_prefix}/lihat_data_tamu", methods=['GET'])
-def getdata():
-    try:
-        query = f"SELECT * FROM tb_guests"
-        records = db.run_query(query=query)
-        response = get_response_msg(records, HTTPStatus.OK)
-        db.close_connection()
-        return response
-    except pymysql.MySQLError as sqle:
-        abort(HTTPStatus.INTERNAL_SERVER_ERROR, description=str(sqle))
-    except Exception as e:
-        abort(HTTPStatus.BAD_REQUEST, description=str(e))
-
-
-## /api/v1/edit_data_tamu
-@app.route(f"{route_prefix}/edit_data_tamu", methods=['POST'])
-def editdata():
-    try:
-        id = request.args.get('id')
-        nama = request.args.get('nama')
-        alamat = request.args.get('alamat')
-        jenis_tamu = request.args.get('jenis_tamu')
-        if (id == None):
-            records = "id is must"
-            response = get_response_msg(records, HTTPStatus.BAD_REQUEST)
-            return response
-        else:
-            query = f"UPDATE tb_guests SET name='{nama}',alamat='{alamat}',jenis_tamu='{jenis_tamu}' WHERE id={id}"
-            records = db.run_query(query=query)
-            response = get_response_msg(records, HTTPStatus.OK)
-            db.close_connection()
-            return response
-    except pymysql.MySQLError as sqle:
-        abort(HTTPStatus.INTERNAL_SERVER_ERROR, description=str(sqle))
-    except Exception as e:
-        abort(HTTPStatus.BAD_REQUEST, description=str(e))
-
-
-## /api/v1/lihat_data_satu_tamu
-@app.route(f"{route_prefix}/lihat_data_satu_tamu", methods=['GET'])
-def getcitycodes():
-    if request.method == 'GET':
-        try:
-            tamu_id = request.args.get('id')
-            query = f"SELECT * FROM tb_guests WHERE id={tamu_id}"
-            records = db.run_query(query=query)
-            response = get_response_msg(records, HTTPStatus.OK)
-            db.close_connection()
-            return response
-        except pymysql.MySQLError as sqle:
-            abort(HTTPStatus.INTERNAL_SERVER_ERROR, description=str(sqle))
-        except Exception as e:
-            abort(HTTPStatus.BAD_REQUEST, description=str(e))
-    else:
-        response = get_response_msg("error", HTTPStatus.INTERNAL_SERVER_ERROR)
-        return response
-
-
-## /api/1.0/ubah_kehadiran
-@app.route(f"{route_prefix}/ubah_kehadiran", methods=['POST'])
-def ubah_kehadiran():
-    id = request.args.get('id')
-    kehadiran = request.args.get('kehadiran')
-    query = f"UPDATE tb_guests SET kehadiran='{kehadiran}' WHERE id={id}"
-    records = db.run_query(query=query)
-    db.close_connection()
-    response = get_response_msg(records, HTTPStatus.OK)
-    return response
-
-
-## /api/1.0/getsummary
-@app.route(f"{route_prefix}/getsummary", methods=['GET'])
-def getsummary():
-    try:
-        query = f"SELECT * FROM tb_guests WHERE kehadiran='BELUM KONFIRMASI'"
-        query1 = f"SELECT * FROM tb_guests WHERE kehadiran='AKAN HADIR'"
-        query2 = f"SELECT * FROM tb_guests WHERE kehadiran='TIDAK HADIR'"
-        query3 = f"SELECT * FROM tb_guests WHERE kehadiran='SUDAH HADIR'"
-        records = db.run_query(query=query)
-        records1 = db.run_query(query=query1)
-        records2 = db.run_query(query=query2)
-        records3 = db.run_query(query=query3)
-        db.close_connection()
-        response = [len(records), len(records1), len(records2), len(records3)]
-        response = get_response_msg(response, HTTPStatus.OK)
-        return response
-    except pymysql.MySQLError as sqle:
-        abort(HTTPStatus.INTERNAL_SERVER_ERROR, description=str(sqle))
-    except Exception as e:
-        abort(HTTPStatus.BAD_REQUEST, description=str(e))
-
-
-## /api/1.0/search
-@app.route(f"{route_prefix}/search", methods=['GET'])
-def search():
-    try:
-        params = request.args.get('params')
-        query = f"SELECT * FROM tb_guests WHERE name LIKE '%{params}%'"
-        records = db.run_query(query=query)
-        response = get_response_msg(records, HTTPStatus.OK)
-        db.close_connection()
-        return response
-    except pymysql.MySQLError as sqle:
-        abort(HTTPStatus.INTERNAL_SERVER_ERROR, description=str(sqle))
-    except Exception as e:
-        abort(HTTPStatus.BAD_REQUEST, description=str(e))
-
-
 ## /api/v1/health
 @app.route(f"{route_prefix}/health", methods=['GET'])
 def health():
+    # Get connection object from a pool
+    connection_object = connection_pool.get_connection()
     try:
-        db_status = "Connected to DB" if db.db_connection_status else "Not connected to DB"
-        response = get_response_msg("I am fine! " + db_status, HTTPStatus.OK)
-        return response
-    except pymysql.MySQLError as sqle:
-        abort(HTTPStatus.INTERNAL_SERVER_ERROR, description=str(sqle))
-    except Exception as e:
-        abort(HTTPStatus.BAD_REQUEST, description=str(e))
+        print("Printing connection pool properties ")
+        print("Connection Pool Name - ", connection_pool.pool_name)
+        print("Connection Pool Size - ", connection_pool.pool_size)
+        if connection_object.is_connected():
+            db_Info = connection_object.get_server_info()
+            print("Connected to MySQL database using connection pool ... MySQL Server version on ", db_Info)
 
+            cursor = connection_object.cursor()
+            cursor.execute("select database();")
+            record = cursor.fetchone()
+            print("Your connected to - ", record)
 
-## QRCode reader
-@app.route(f"{route_prefix}/readqr", methods=['POST'])
-def qr_reader():
+    except Error as e:
+        print("Error while connecting to MySQL using Connection pool ", e)
+    finally:
+        # closing database connection.
+        if connection_object.is_connected():
+            cursor.close()
+            connection_object.close()
+            return("MySQL connection is closed")
+
+@app.route(f"{route_prefix}/get_all_tamu", methods=['GET'])
+def get_all_tamu():
+    # Get connection object from a pool
+    connection_object = connection_pool.get_connection()
     try:
-        img = json.loads(request.data)
-        imgg = img['base64']
-        name = str(img['time'])
-        B64_decode = base64.b64decode(imgg)
-        path = f'F:\Sidna\pythonProject-BE-Wedding\image'
+        if connection_object.is_connected():
 
-        # write the decoded data back to original format in  file
-        img_file = open(path + '\image_' + name + '.jpg', 'wb')
-        img_file.write(B64_decode)
-        img_file.close()
+            cursor = connection_object.cursor()
+            cursor.execute("select * from tb_guests")
+            record = cursor.fetchall()
 
-        # response = get_response_msg(str(img_file11), HTTPStatus.OK)
-        img_arr = cv2.imread(path + '\image_' + name + '.jpg')
+    except Error as e:
+        print("Error while connecting to MySQL using Connection pool ", e)
+    finally:
+        # closing database connection.
+        if connection_object.is_connected():
+            cursor.close()
+            connection_object.close()
+            return record
 
-        # Detect and decode the qrcode
-        data, bbox, rectifiedImage = qrDecoder.detectAndDecode(img_arr)
-        print(len(data))
-        if len(data) > 0:
-            output = format(data)
-            query = f"UPDATE tb_guests SET kehadiran='SUDAH HADIR' WHERE id={output}"
-            query2 = f"SELECT * FROM tb_guests WHERE id={output}"
-            db.run_query(query=query)
-            records = db.run_query(query=query2)
-            response = get_response_msg(records, HTTPStatus.OK)
-            db.close_connection()
-            return response
-        else:
-            response = get_response_msg("QR Code not detected", HTTPStatus.NOT_FOUND)
-            return response
-    except:
-        response = get_response_msg("Internal Error", HTTPStatus.INTERNAL_SERVER_ERROR)
-        return response
+@app.route(f"{route_prefix}/tambah_tamu", methods=['POST'])
+def tambah_tamu():
+    nama = request.args.get('nama')
+    alamat = request.args.get('alamat')
+    jenis_tamu = request.args.get('jenis_tamu')
+
+    # Get connection object from a pool
+    connection_object = connection_pool.get_connection()
+    try:
+        if connection_object.is_connected():
+
+            cursor = connection_object.cursor()
+            query = 'INSERT INTO tb_guests (name, alamat, jenis_tamu) VALUES (%s,%s,%s)'
+            val = (nama, alamat, jenis_tamu)
+            cursor.execute(query, val)
+            connection_object.commit()
+
+    except Error as e:
+        print("Error while connecting to MySQL using Connection pool ", e)
+    finally:
+        # closing database connection.
+        if connection_object.is_connected():
+            cursor.close()
+            connection_object.close()
+            return "data berhasil ditambahkan"
+# ## QRCode reader
+# @app.route(f"{route_prefix}/readqr", methods=['POST'])
+# def qr_reader():
+#     try:
+#         img = json.loads(request.data)
+#         imgg = img['base64']
+#         name = str(img['time'])
+#         B64_decode = base64.b64decode(imgg)
+#         path = f'F:\Sidna\pythonProject-BE-Wedding\image'
+#
+#         # write the decoded data back to original format in  file
+#         img_file = open(path + '\image_' + name + '.jpg', 'wb')
+#         img_file.write(B64_decode)
+#         img_file.close()
+#
+#         # response = get_response_msg(str(img_file11), HTTPStatus.OK)
+#         img_arr = cv2.imread(path + '\image_' + name + '.jpg')
+#
+#         # Detect and decode the qrcode
+#         data, bbox, rectifiedImage = qrDecoder.detectAndDecode(img_arr)
+#         print(len(data))
+#         if len(data) > 0:
+#             output = format(data)
+#             query = f"UPDATE tb_guests SET kehadiran='SUDAH HADIR' WHERE id={output}"
+#             query2 = f"SELECT * FROM tb_guests WHERE id={output}"
+#             db.run_query(query=query)
+#             records = db.run_query(query=query2)
+#             response = get_response_msg(records, HTTPStatus.OK)
+#             db.close_connection()
+#             return response
+#         else:
+#             response = get_response_msg("QR Code not detected", HTTPStatus.NOT_FOUND)
+#             return response
+#     except:
+#         response = get_response_msg("Internal Error", HTTPStatus.INTERNAL_SERVER_ERROR)
+#         return response
 
 
 ## /
@@ -252,4 +176,4 @@ def internal_server_error(e):
 
 if __name__ == '__main__':
     ## Launch the application 
-    app.run(host=host, port=port)
+    app.run(host="localhost", port=8008, debug='true')
