@@ -174,7 +174,7 @@ def lihat_data_satu_tamu():
 ## /api/v1/delete_data_satu_tamu
 @app.route(f"{route_prefix}/delete_data_satu_tamu", methods=['DELETE'])
 def delete_data_satu_tamu():
-    id = int(request.args.get('id'))
+    id = request.args.get('id')
     # Get connection object from a pool
     connection_object = connection_pool.get_connection()
     cursor = connection_object.cursor()
