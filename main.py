@@ -19,7 +19,7 @@ directory = r'F:\Sidna\pythonProject-BE-Wedding\image'
 
 app = Flask(__name__)
 cors = CORS(app, resources={f"{route_prefix}/*": {"origins": "*"}})
-x = x = datetime.now()x
+x = datetime.now()
 x = str(x)
 connection_pool = pooling.MySQLConnectionPool(pool_name="pynative_pool",
                                               pool_size=10,
@@ -77,7 +77,7 @@ def get_all_tamu():
             cursor = connection_object.cursor()
             cursor.execute("select * from tb_guests")
             record = cursor.fetchall()
-            print("sedang melihat data tamu pada:" + x = str(x)x)
+            print("sedang melihat data tamu pada:" + x)
     except Error as e:
         print("Error while connecting to MySQL using Connection pool ", e)
     finally:
