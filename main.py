@@ -19,7 +19,8 @@ directory = r'F:\Sidna\pythonProject-BE-Wedding\image'
 
 app = Flask(__name__)
 cors = CORS(app, resources={f"{route_prefix}/*": {"origins": "*"}})
-
+x = x = datetime.now()x
+x = str(x)
 connection_pool = pooling.MySQLConnectionPool(pool_name="pynative_pool",
                                               pool_size=10,
                                               pool_reset_session=True,
@@ -76,7 +77,7 @@ def get_all_tamu():
             cursor = connection_object.cursor()
             cursor.execute("select * from tb_guests")
             record = cursor.fetchall()
-            print("sedang melihat data tamu pada:" + datetime.now())
+            print("sedang melihat data tamu pada:" + x = str(x)x)
     except Error as e:
         print("Error while connecting to MySQL using Connection pool ", e)
     finally:
@@ -108,7 +109,7 @@ def tambah_tamu():
     finally:
         # closing database connection.
         if connection_object.is_connected():
-            print("berhasil menambahkan data tamu pada:" + datetime.now())
+            print("berhasil menambahkan data tamu pada:" + x)
             cursor.close()
             connection_object.close()
             return "data berhasil ditambahkan"
@@ -134,7 +135,7 @@ def editdata():
             query = f"UPDATE tb_guests SET name='{nama}',alamat='{alamat}',jenis_tamu='{jenis_tamu}' WHERE id={id}"
             cursor.execute(query)
             connection_object.commit()
-            print("berhasil mengedit data tamu pada:" + datetime.now())
+            print("berhasil mengedit data tamu pada:" + x)
     except Error as e:
         print("Error while connecting to MySQL using Connection pool ", e)
     finally:
@@ -185,7 +186,7 @@ def delete_data_satu_tamu():
         if connection_object.is_connected():
             cursor.execute(f"DELETE FROM tb_guests WHERE id={id}")
             records = "tamu tersebut sudah dihapus"
-            print("id yang dihapus adalah" + id + " pada:" + datetime.now())
+            print("id yang dihapus adalah" + id + " pada:" + x)
             response = get_response_msg(records, HTTPStatus.BAD_REQUEST)
     except Error as e:
         print("Error while connecting to MySQL using Connection pool ", e)
@@ -276,7 +277,7 @@ def getsummary():
 ## /api/1.0/readqr
 @app.route(f"{route_prefix}/scanqr", methods=['POST'])
 def readqr():
-    print("sedang menggunakan API scanqr pada:" + datetime.now())
+    print("sedang menggunakan API scanqr pada:" + x)
     data = json.loads(request.data)
     imgg = data['base64']
     name = str(data['time'])
@@ -289,7 +290,7 @@ def readqr():
         img_file.close()
 
         img_arr = cv2.imread(path + '\image_' + name + '.jpg')
-        print("berhasil menyimpan gambar pada:" + datetime.now())
+        print("berhasil menyimpan gambar pada:" + x)
 
         # Get connection object from a pool
         connection_object = connection_pool.get_connection()
@@ -302,13 +303,13 @@ def readqr():
             output = format(data)
             cursor.execute(f"UPDATE tb_guests SET kehadiran='SUDAH HADIR' WHERE id={output}")
             connection_object.commit()
-            print("id yang diupdate kehadirannya adalah" + output + " pada: " + datetime.now())
+            print("id yang diupdate kehadirannya adalah" + output + " pada: " + x)
             cursor.execute(f"select * from tb_guests WHERE id={output}")
             record = cursor.fetchall()
             response = get_response_msg(record, HTTPStatus.OK)
         else:
             response = get_response_msg("QR Code not detected", HTTPStatus.NOT_FOUND)
-            print("QR code tidak terbaca, proses ini dilakukan pada: " + datetime.now())
+            print("QR code tidak terbaca, proses ini dilakukan pada: " + x)
             cursor.close()
             connection_object.close()
             return response
