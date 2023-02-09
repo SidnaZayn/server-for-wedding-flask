@@ -184,7 +184,7 @@ def delete_data_satu_tamu():
             response = get_response_msg(records, HTTPStatus.BAD_REQUEST)
             return response
         if connection_object.is_connected():
-            cursor.execute(f"DELETE FROM tb_guests WHERE id={id}")
+            cursor.execute(f"DELETE FROM tb_guests WHERE id='{id}'")
             print("id yang dihapus adalah : " + str(id) + " pada:" + x)
     except Error as e:
         print("Error while connecting to MySQL using Connection pool ", e)
