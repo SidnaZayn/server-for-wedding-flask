@@ -186,7 +186,6 @@ def delete_data_satu_tamu():
         if connection_object.is_connected():
             cursor.execute(f"DELETE FROM `tb_guests` WHERE `id`={id}")
             print("id yang dihapus adalah" + id + " pada:" + x)
-            response = get_response_msg("tamu tersebut sudah dihapus", HTTPStatus.BAD_REQUEST)
     except Error as e:
         print("Error while connecting to MySQL using Connection pool ", e)
     finally:
@@ -194,7 +193,7 @@ def delete_data_satu_tamu():
         if connection_object.is_connected():
             cursor.close()
             connection_object.close()
-            return response
+            return get_response_msg("tamu tersebut sudah dihapus", HTTPStatus.OK)
 
 
 ## /api/1.0/ubah_kehadiran
