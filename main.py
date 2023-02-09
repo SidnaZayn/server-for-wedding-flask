@@ -167,6 +167,31 @@ def lihat_data_satu_tamu():
             connection_object.close()
             return record
 
+## /api/v1/delete_data_satu_tamu
+@app.route(f"{route_prefix}/delete_data_satu_tamu", methods=['DELETE'])
+def delete_data_satu_tamu():
+    id = request.args.get('id')
+    # Get connection object from a pool
+    connection_object = connection_pool.get_connection()
+    cursor = connection_object.cursor()
+    try:
+        if (id == None):
+            records = "id is must"
+            response = get_response_msg(records, HTTPStatus.BAD_REQUEST)
+            return response
+        if connection_object.is_connected():
+            cursor.execute(f"DELETE FROM tb_guests WHERE id={id}")
+            records = "tamu tersebut sudah dihapus"
+            response = get_response_msg(records, HTTPStatus.BAD_REQUEST)
+    except Error as e:
+        print("Error while connecting to MySQL using Connection pool ", e)
+    finally:
+        # closing database connection.
+        if connection_object.is_connected():
+            cursor.close()
+            connection_object.close()
+            return response
+
 
 ## /api/1.0/ubah_kehadiran
 @app.route(f"{route_prefix}/ubah_kehadiran", methods=['POST'])
@@ -262,6 +287,7 @@ def readqr():
 
         # Get connection object from a pool
         connection_object = connection_pool.get_connection()
+        cursor = connection_object.cursor()
 
         # Detect and decode the qrcode
         data, bbox, rectifiedImage = qrDecoder.detectAndDecode(img_arr)
@@ -269,7 +295,6 @@ def readqr():
 
         if len(data) > 0:
             output = format(data)
-            cursor = connection_object.cursor()
             cursor.execute(f"UPDATE tb_guests SET kehadiran='SUDAH HADIR' WHERE id={output}")
             connection_object.commit()
             print(output)
@@ -278,6 +303,8 @@ def readqr():
             response = get_response_msg(record, HTTPStatus.OK)
         else:
             response = get_response_msg("QR Code not detected", HTTPStatus.NOT_FOUND)
+            cursor.close()
+            connection_object.close()
             return response
     except Error as e:
         print("Error while connecting to MySQL using Connection pool ", e)
