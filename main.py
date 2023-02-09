@@ -174,7 +174,7 @@ def lihat_data_satu_tamu():
 ## /api/v1/delete_data_satu_tamu
 @app.route(f"{route_prefix}/delete_data_satu_tamu", methods=['DELETE'])
 def delete_data_satu_tamu():
-    id = request.args.get('id')
+    id = int(request.args.get('id'))
     # Get connection object from a pool
     connection_object = connection_pool.get_connection()
     cursor = connection_object.cursor()
@@ -185,7 +185,7 @@ def delete_data_satu_tamu():
             return response
         if connection_object.is_connected():
             cursor.execute(f"DELETE FROM `tb_guests` WHERE `id`={id}")
-            print("id yang dihapus adalah" + id + " pada:" + x)
+            print("id yang dihapus adalah" + str(id) + " pada:" + x)
     except Error as e:
         print("Error while connecting to MySQL using Connection pool ", e)
     finally:
