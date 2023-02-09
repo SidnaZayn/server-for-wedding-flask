@@ -184,7 +184,7 @@ def delete_data_satu_tamu():
             response = get_response_msg(records, HTTPStatus.BAD_REQUEST)
             return response
         if connection_object.is_connected():
-            cursor.execute(f"DELETE FROM tb_guests WHERE id={id}")
+            cursor.execute(f"DELETE FROM tb_guests WHERE 'id'={id}")
             records = "tamu tersebut sudah dihapus"
             print("id yang dihapus adalah" + id + " pada:" + x)
             response = get_response_msg(records, HTTPStatus.BAD_REQUEST)
