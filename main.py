@@ -20,7 +20,7 @@ app = Flask(__name__)
 cors = CORS(app, resources={f"{route_prefix}/*": {"origins": "*"}})
 
 connection_pool = pooling.MySQLConnectionPool(pool_name="pynative_pool",
-                                              pool_size=5,
+                                              pool_size=10,
                                               pool_reset_session=True,
                                               host='127.0.0.1',
                                               database='undanga4_wedding',
