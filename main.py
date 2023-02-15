@@ -67,7 +67,6 @@ def health():
             connection_object.close()
             return ("MySQL connection is closed")
 
-
 @app.route(f"{route_prefix}/lihat_data_tamu", methods=['GET'])
 def get_all_tamu():
     # Get connection object from a pool
@@ -320,6 +319,53 @@ def readqr():
             cursor.close()
             connection_object.close()
             return response
+
+#Ucapan
+## /api/1.0/ucapan POST
+@app.route(f"{route_prefix}/ucapan", methods=['POST'])
+def tambah_ucapan():
+    nama = request.args.get('nama')
+    asal = request.args.get('asal')
+    pesan = request.args.get('pesan')
+
+    # Get connection object from a pool
+    connection_object = connection_pool.get_connection()
+    try:
+        if connection_object.is_connected():
+            cursor = connection_object.cursor()
+            query = 'INSERT INTO tb_ucapan (name, asal, pesan) VALUES (%s,%s,%s)'
+            val = (nama, asal, pesan)
+            cursor.execute(query, val)
+            connection_object.commit()
+    except Error as e:
+        print("Error while connecting to MySQL using Connection pool ", e)
+    finally:
+        # closing database connection.
+        if connection_object.is_connected():
+            print("berhasil menambahkan data ucapan pada:" + x)
+            cursor.close()
+            connection_object.close()
+            return "data berhasil ditambahkan"
+
+## /api/1.0/ucapan GET
+@app.route(f"{route_prefix}/ucapan", methods=['GET'])
+def lihat_ucapan():
+    # Get connection object from a pool
+    connection_object = connection_pool.get_connection()
+    try:
+        if connection_object.is_connected():
+            cursor = connection_object.cursor()
+            cursor.execute("select * from tb_ucapan")
+            record = cursor.fetchall()
+            print("sedang melihat data ucapan pada:" + x)
+    except Error as e:
+        print("Error while connecting to MySQL using Connection pool ", e)
+    finally:
+        # closing database connection.
+        if connection_object.is_connected():
+            cursor.close()
+            connection_object.close()
+            return record
 
 
 @app.route('/', methods=['GET'])
