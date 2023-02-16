@@ -26,8 +26,8 @@ connection_pool = pooling.MySQLConnectionPool(pool_name="pynative_pool",
                                               pool_reset_session=True,
                                               host='127.0.0.1',
                                               database='undanga4_wedding',
-                                              user='root',
-                                              password='')
+                                              user='undanga4_zen',
+                                              password='ft,_DY3p.Ap!')
 
 
 def get_response_msg(data, status_code):
