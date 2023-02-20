@@ -461,6 +461,48 @@ def ubah_status():
             connection_object.close()
             return "data tamu tersebut berhasil diubah status kehadirannya"
 
+## /api/1.0/ubah_status GET
+@app.route(f"{route_prefix}/cancel_ubah_status", methods=['GET'])
+def cancel_ubah_status():
+    # Get connection object from a pool
+    connection_object = connection_pool.get_connection()
+    id = request.args.get('id')
+    try:
+        if connection_object.is_connected():
+            cursor = connection_object.cursor()
+            query = f"UPDATE tb_tamu_akan_hadir SET status_kehadiran='BELUM HADIR' WHERE id={id}"
+            cursor.execute(query)
+            connection_object.commit()
+            print("berhasil mengedit data tamu jumlah status tamu pada:" + x)
+    except Error as e:
+        print("Error while connecting to MySQL using Connection pool ", e)
+    finally:
+        # closing database connection.
+        if connection_object.is_connected():
+            cursor.close()
+            connection_object.close()
+            return "data tamu tersebut berhasil diubah status kehadirannya"
+
+## /api/1.0/search_jumlah
+@app.route(f"{route_prefix}/search_jumlah", methods=['GET'])
+def search_jumlah():
+    params = request.args.get('params')
+    # Get connection object from a pool
+    connection_object = connection_pool.get_connection()
+    try:
+        if connection_object.is_connected():
+            cursor = connection_object.cursor()
+            cursor.execute(f"SELECT * FROM tb_tamu_akan_hadir WHERE nama LIKE '%{params}%'")
+            record = cursor.fetchall()
+    except Error as e:
+        print("Error while connecting to MySQL using Connection pool ", e)
+    finally:
+        # closing database connection.
+        if connection_object.is_connected():
+            cursor.close()
+            connection_object.close()
+            return record
+
 @app.route('/', methods=['GET'])
 def home():
     return redirect(url_for('health'))
