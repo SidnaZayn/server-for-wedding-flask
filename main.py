@@ -439,6 +439,28 @@ def hapus_data_jumlah_tamu():
             connection_object.close()
             return get_response_msg("jumlah tamu tersebut sudah dihapus", HTTPStatus.OK)
 
+## /api/1.0/ubah_status GET
+@app.route(f"{route_prefix}/ubah_status", methods=['GET'])
+def ubah_status():
+    # Get connection object from a pool
+    connection_object = connection_pool.get_connection()
+    id = request.args.get('id')
+    try:
+        if connection_object.is_connected():
+            cursor = connection_object.cursor()
+            query = f"UPDATE tb_tamu_akan_hadir SET status_kehadiran='SUDAH HADIR' WHERE id={id}"
+            cursor.execute(query)
+            connection_object.commit()
+            print("berhasil mengedit data tamu jumlah status tamu pada:" + x)
+    except Error as e:
+        print("Error while connecting to MySQL using Connection pool ", e)
+    finally:
+        # closing database connection.
+        if connection_object.is_connected():
+            cursor.close()
+            connection_object.close()
+            return "data tamu tersebut berhasil diubah status kehadirannya"
+
 @app.route('/', methods=['GET'])
 def home():
     return redirect(url_for('health'))
