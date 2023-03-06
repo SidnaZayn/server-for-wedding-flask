@@ -326,8 +326,8 @@ def readqr():
 def tambah_ucapan():
     nama = request.args.get('nama')
     asal = request.args.get('asal')
-    pesan = request.args.get('pesan')
-
+    pesan2 = request.args.get('pesan')
+    pesan = str(pesan2).replace("?","")
     # Get connection object from a pool
     connection_object = connection_pool.get_connection()
     try:
