@@ -52,6 +52,3 @@ it's a back end project for wedding invitation of Sidna and Ariesty using Flask 
 ```
 
 ## has'nt been created features
-
-- ucapan (create, read, edit, delete)
-- qrcode scanner
