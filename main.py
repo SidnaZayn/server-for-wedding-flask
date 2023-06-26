@@ -5,6 +5,7 @@ from http import HTTPStatus
 import cv2
 from flask import Flask, redirect, request, jsonify, url_for
 from flask_cors import CORS
+from datetime import datetime
 from mysql.connector import Error
 from mysql.connector import pooling
 
@@ -18,9 +19,10 @@ directory = r'F:\Sidna\pythonProject-BE-Wedding\image'
 
 app = Flask(__name__)
 cors = CORS(app, resources={f"{route_prefix}/*": {"origins": "*"}})
-
+x = datetime.now()
+x = str(x)
 connection_pool = pooling.MySQLConnectionPool(pool_name="pynative_pool",
-                                              pool_size=5,
+                                              pool_size=10,
                                               pool_reset_session=True,
                                               host='127.0.0.1',
                                               database='undanga4_wedding',
@@ -65,7 +67,6 @@ def health():
             connection_object.close()
             return ("MySQL connection is closed")
 
-
 @app.route(f"{route_prefix}/lihat_data_tamu", methods=['GET'])
 def get_all_tamu():
     # Get connection object from a pool
@@ -75,7 +76,7 @@ def get_all_tamu():
             cursor = connection_object.cursor()
             cursor.execute("select * from tb_guests")
             record = cursor.fetchall()
-
+            print("sedang melihat data tamu pada:" + x)
     except Error as e:
         print("Error while connecting to MySQL using Connection pool ", e)
     finally:
@@ -107,6 +108,7 @@ def tambah_tamu():
     finally:
         # closing database connection.
         if connection_object.is_connected():
+            print("berhasil menambahkan data tamu pada:" + x)
             cursor.close()
             connection_object.close()
             return "data berhasil ditambahkan"
@@ -132,7 +134,7 @@ def editdata():
             query = f"UPDATE tb_guests SET name='{nama}',alamat='{alamat}',jenis_tamu='{jenis_tamu}' WHERE id={id}"
             cursor.execute(query)
             connection_object.commit()
-
+            print("berhasil mengedit data tamu pada:" + x)
     except Error as e:
         print("Error while connecting to MySQL using Connection pool ", e)
     finally:
@@ -166,6 +168,32 @@ def lihat_data_satu_tamu():
             cursor.close()
             connection_object.close()
             return record
+
+
+## /api/v1/delete_data_satu_tamu
+@app.route(f"{route_prefix}/delete_data_satu_tamu", methods=['DELETE'])
+def delete_data_satu_tamu():
+    id = int(request.args.get('id'))
+    # Get connection object from a pool
+    connection_object = connection_pool.get_connection()
+    cursor = connection_object.cursor()
+    try:
+        if (id == None):
+            records = "id is must"
+            response = get_response_msg(records, HTTPStatus.BAD_REQUEST)
+            return response
+        if connection_object.is_connected():
+            cursor.execute(f"DELETE FROM `tb_guests` WHERE `id`={id}")
+            connection_object.commit()
+            print("id yang dihapus adalah : " + str(id) + " pada:" + x)
+    except Error as e:
+        print("Error while connecting to MySQL using Connection pool ", e)
+    finally:
+        # closing database connection.
+        if connection_object.is_connected():
+            cursor.close()
+            connection_object.close()
+            return get_response_msg("tamu tersebut sudah dihapus", HTTPStatus.OK)
 
 
 ## /api/1.0/ubah_kehadiran
@@ -247,6 +275,7 @@ def getsummary():
 ## /api/1.0/readqr
 @app.route(f"{route_prefix}/scanqr", methods=['POST'])
 def readqr():
+    print("sedang menggunakan API scanqr pada:" + x)
     data = json.loads(request.data)
     imgg = data['base64']
     name = str(data['time'])
@@ -259,25 +288,28 @@ def readqr():
         img_file.close()
 
         img_arr = cv2.imread(path + '\image_' + name + '.jpg')
+        print("berhasil menyimpan gambar pada:" + x)
 
         # Get connection object from a pool
         connection_object = connection_pool.get_connection()
+        cursor = connection_object.cursor()
 
         # Detect and decode the qrcode
         data, bbox, rectifiedImage = qrDecoder.detectAndDecode(img_arr)
-        print(len(data))
 
         if len(data) > 0:
             output = format(data)
-            cursor = connection_object.cursor()
             cursor.execute(f"UPDATE tb_guests SET kehadiran='SUDAH HADIR' WHERE id={output}")
             connection_object.commit()
-            print(output)
+            print("id yang diupdate kehadirannya adalah" + output + " pada: " + x)
             cursor.execute(f"select * from tb_guests WHERE id={output}")
             record = cursor.fetchall()
             response = get_response_msg(record, HTTPStatus.OK)
         else:
             response = get_response_msg("QR Code not detected", HTTPStatus.NOT_FOUND)
+            print("QR code tidak terbaca, proses ini dilakukan pada: " + x)
+            cursor.close()
+            connection_object.close()
             return response
     except Error as e:
         print("Error while connecting to MySQL using Connection pool ", e)
@@ -287,6 +319,189 @@ def readqr():
             cursor.close()
             connection_object.close()
             return response
+
+#Ucapan
+## /api/1.0/ucapan POST
+@app.route(f"{route_prefix}/ucapan", methods=['POST'])
+def tambah_ucapan():
+    nama = request.args.get('nama')
+    asal = request.args.get('asal')
+    pesan2 = request.args.get('pesan')
+    pesan = str(pesan2).replace("?","")
+    # Get connection object from a pool
+    connection_object = connection_pool.get_connection()
+    try:
+        if connection_object.is_connected():
+            cursor = connection_object.cursor()
+            query = 'INSERT INTO tb_ucapan (name, asal, pesan) VALUES (%s,%s,%s)'
+            val = (nama, asal, pesan)
+            cursor.execute(query, val)
+            connection_object.commit()
+    except Error as e:
+        print("Error while connecting to MySQL using Connection pool ", e)
+    finally:
+        # closing database connection.
+        if connection_object.is_connected():
+            print("berhasil menambahkan data ucapan pada:" + x)
+            cursor.close()
+            connection_object.close()
+            return "data berhasil ditambahkan"
+
+## /api/1.0/ucapan GET
+@app.route(f"{route_prefix}/ucapan", methods=['GET'])
+def lihat_ucapan():
+    # Get connection object from a pool
+    connection_object = connection_pool.get_connection()
+    try:
+        if connection_object.is_connected():
+            cursor = connection_object.cursor()
+            cursor.execute("select * from tb_ucapan")
+            record = cursor.fetchall()
+            print("sedang melihat data ucapan pada:" + x)
+    except Error as e:
+        print("Error while connecting to MySQL using Connection pool ", e)
+    finally:
+        # closing database connection.
+        if connection_object.is_connected():
+            cursor.close()
+            connection_object.close()
+            return record
+
+#Konfirmasi Kehadiran dan Jumlah Tamu
+## /api/1.0/jumlah_tamu POST
+@app.route(f"{route_prefix}/jumlah_tamu", methods=['POST'])
+def tambah_jumlah_tamu():
+    nama = request.args.get('nama')
+    asal = request.args.get('asal')
+    jumlah_tamu = request.args.get('jumlah_tamu')
+
+    # Get connection object from a pool
+    connection_object = connection_pool.get_connection()
+    try:
+        if connection_object.is_connected():
+            cursor = connection_object.cursor()
+            query = 'INSERT INTO tb_tamu_akan_hadir (nama, asal, jumlah_tamu) VALUES (%s,%s,%s)'
+            val = (nama, asal, jumlah_tamu)
+            cursor.execute(query, val)
+            connection_object.commit()
+    except Error as e:
+        print("Error while connecting to MySQL using Connection pool ", e)
+    finally:
+        # closing database connection.
+        if connection_object.is_connected():
+            print("berhasil menambahkan data jumlah tamu pada:" + x)
+            cursor.close()
+            connection_object.close()
+            return "data jumlah tamu berhasil ditambahkan"
+
+## /api/1.0/jumlah_tamu GET
+@app.route(f"{route_prefix}/jumlah_tamu", methods=['GET'])
+def lihat_jumlah_tamu():
+    # Get connection object from a pool
+    connection_object = connection_pool.get_connection()
+    try:
+        if connection_object.is_connected():
+            cursor = connection_object.cursor()
+            cursor.execute("select * from tb_tamu_akan_hadir")
+            record = cursor.fetchall()
+            print("sedang melihat data jumlah tamu pada:" + x)
+    except Error as e:
+        print("Error while connecting to MySQL using Connection pool ", e)
+    finally:
+        # closing database connection.
+        if connection_object.is_connected():
+            cursor.close()
+            connection_object.close()
+            return record
+
+## /api/v1/jumlah_tamu
+@app.route(f"{route_prefix}/jumlah_tamu", methods=['DELETE'])
+def hapus_data_jumlah_tamu():
+    id = int(request.args.get('id'))
+    # Get connection object from a pool
+    connection_object = connection_pool.get_connection()
+    cursor = connection_object.cursor()
+    try:
+        if (id == None):
+            records = "id is must"
+            response = get_response_msg(records, HTTPStatus.BAD_REQUEST)
+            return response
+        if connection_object.is_connected():
+            cursor.execute(f"DELETE FROM `tb_tamu_akan_hadir` WHERE `id`={id}")
+            connection_object.commit()
+            print("id yang dihapus adalah : " + str(id) + " pada:" + x)
+    except Error as e:
+        print("Error while connecting to MySQL using Connection pool ", e)
+    finally:
+        # closing database connection.
+        if connection_object.is_connected():
+            cursor.close()
+            connection_object.close()
+            return get_response_msg("jumlah tamu tersebut sudah dihapus", HTTPStatus.OK)
+
+## /api/1.0/ubah_status GET
+@app.route(f"{route_prefix}/ubah_status", methods=['GET'])
+def ubah_status():
+    # Get connection object from a pool
+    connection_object = connection_pool.get_connection()
+    id = request.args.get('id')
+    try:
+        if connection_object.is_connected():
+            cursor = connection_object.cursor()
+            query = f"UPDATE tb_tamu_akan_hadir SET status_kehadiran='SUDAH HADIR' WHERE id={id}"
+            cursor.execute(query)
+            connection_object.commit()
+            print("berhasil mengedit data tamu jumlah status tamu pada:" + x)
+    except Error as e:
+        print("Error while connecting to MySQL using Connection pool ", e)
+    finally:
+        # closing database connection.
+        if connection_object.is_connected():
+            cursor.close()
+            connection_object.close()
+            return "data tamu tersebut berhasil diubah status kehadirannya"
+
+## /api/1.0/ubah_status GET
+@app.route(f"{route_prefix}/cancel_ubah_status", methods=['GET'])
+def cancel_ubah_status():
+    # Get connection object from a pool
+    connection_object = connection_pool.get_connection()
+    id = request.args.get('id')
+    try:
+        if connection_object.is_connected():
+            cursor = connection_object.cursor()
+            query = f"UPDATE tb_tamu_akan_hadir SET status_kehadiran='BELUM HADIR' WHERE id={id}"
+            cursor.execute(query)
+            connection_object.commit()
+            print("berhasil mengedit data tamu jumlah status tamu pada:" + x)
+    except Error as e:
+        print("Error while connecting to MySQL using Connection pool ", e)
+    finally:
+        # closing database connection.
+        if connection_object.is_connected():
+            cursor.close()
+            connection_object.close()
+            return "data tamu tersebut berhasil diubah status kehadirannya"
+
+## /api/1.0/search_jumlah
+@app.route(f"{route_prefix}/search_jumlah", methods=['GET'])
+def search_jumlah():
+    params = request.args.get('params')
+    # Get connection object from a pool
+    connection_object = connection_pool.get_connection()
+    try:
+        if connection_object.is_connected():
+            cursor = connection_object.cursor()
+            cursor.execute(f"SELECT * FROM tb_tamu_akan_hadir WHERE nama LIKE '%{params}%'")
+            record = cursor.fetchall()
+    except Error as e:
+        print("Error while connecting to MySQL using Connection pool ", e)
+    finally:
+        # closing database connection.
+        if connection_object.is_connected():
+            cursor.close()
+            connection_object.close()
+            return record
 
 @app.route('/', methods=['GET'])
 def home():
